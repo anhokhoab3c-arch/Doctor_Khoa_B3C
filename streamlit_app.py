@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import uuid
-import json
 
 # Hàm đọc nội dung từ file văn bản
 def rfile(name_file):
@@ -29,69 +28,26 @@ def send_message_to_llm(session_id, message):
     }
     try:
         response = requests.post(WEBHOOK_URL, json=payload, headers=headers)
-        print("Request payload:", payload)  # In ra payload gửi đi
         response.raise_for_status()
         response_data = response.json()
-        print("Full response:", response_data)  # In ra toàn bộ dữ liệu trả về
-        
-        # Trích xuất contract và urlWord
-        contract = response_data[0].get('contract', "No contract received")
-        url = response_data[0].get('url', "No URL received")
+        print('Response hỏi đáp:', response_data)
+        # Trích xuất contract
+        contract = response_data[0].get('output', "No output")
         
         # Trả về object theo định dạng N8nOutputItems
-        return [{"json": {"contract": contract, "url": url}}]
+        return [{"json": {"contract": contract}}]
     
     except requests.exceptions.RequestException as e:
-        return [{"json": {"contract": f"Error: Failed to connect to the LLM - {str(e)}", "url": ""}}]
-
-def format_contract_display(contract):
-    """Format contract data thành dạng đơn giản key: value"""
-    if isinstance(contract, str):
-        try:
-            # Thử parse JSON nếu contract là string
-            contract_data = json.loads(contract)
-        except:
-            # Nếu không parse được, hiển thị như text thường
-            return contract
-    elif isinstance(contract, dict):
-        contract_data = contract
-    else:
-        return str(contract)
-    
-    # Tạo text đơn giản thay vì HTML
-    text_content = []
-    
-    # Duyệt qua tất cả key-value pairs
-    for key, value in contract_data.items():
-        if value :
-            # Thay _ thành * trong key
-            formatted_key = key.replace('_', ' ')
-            text_content.append(f"{formatted_key} : {value}")
-    
-    return "\n".join(text_content)
+        return [{"json": {"contract": f"Error: Failed to connect to the LLM - {str(e)}"}}]
 
 def display_output(output):
-    """Hiển thị nội dung hợp đồng và URL file Word"""
-    # Lấy contract và urlWord từ output
+    """Hiển thị nội dung hợp đồng"""
     contract = output.get('json', {}).get('contract', "No contract received")
-    urlWord = output.get('json', {}).get('url', "No file received")
-    print("urlWord: ", urlWord)
-    
-    # Hiển thị nội dung hợp đồng với format đơn giản
-    if contract != "No contract received":
-        formatted_contract = format_contract_display(contract)
-        # Sử dụng st.text hoặc st.code thay vì st.markdown
-        st.code(formatted_contract, language=None)
-    else:
-        st.write("Không có thông tin hợp đồng")
-    
-    # Hiển thị URL file Word nếu có
-    if urlWord and urlWord != "No URL received":
-        st.markdown(
-            f"📄 [Xem file hợp đồng (Google Docs)]({urlWord})"
-        )
+    st.markdown(contract, unsafe_allow_html=True)
 
 def main():
+    st.set_page_config(page_title="Trợ lý AI", page_icon="🤖", layout="centered")
+
     st.markdown(
         """
         <style>
@@ -99,14 +55,14 @@ def main():
                 padding: 10px;
                 border-radius: 10px;
                 max-width: 75%;
-                background: none;
+                background: none; /* Màu trong suốt */
                 text-align: left;
             }
             .user {
                 padding: 10px;
                 border-radius: 10px;
                 max-width: 75%;
-                background: none;
+                background: none; /* Màu trong suốt */
                 text-align: right;
                 margin-left: auto;
             }
