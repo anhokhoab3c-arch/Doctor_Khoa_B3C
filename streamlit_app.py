@@ -32,7 +32,7 @@ def send_message_to_llm(session_id, message):
         response_data = response.json()
         print('Response hỏi đáp:', response_data)
         # Trích xuất contract
-        contract = response_data[0].get('output', "No output")
+        contract = response_data.get('output', "No output")
         
         # Trả về object theo định dạng N8nOutputItems
         return [{"json": {"contract": contract}}]
